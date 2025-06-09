@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
-import { Bot, Send, Image as ImageIcon, Mic, MicOff, Volume2, VolumeX, RotateCcw } from 'lucide-react';
+import { Bot, Send, Image as ImageIcon, Mic, MicOff, Volume2, VolumeX, RotateCcw, X } from 'lucide-react';
 import { ChatMessage, ChatAttachment, Source } from './types';
 import { sendChatMessage, ChatApiError } from './api';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
@@ -289,6 +289,131 @@ function App() {
     }
   };
 
+  // Voice Mode Full Screen Component
+  if (isVoiceMode) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-green-50 flex flex-col">
+        {/* Header */}
+        <div className="w-full relative h-[10vh] min-h-[80px] max-h-[100px]">
+          <img
+            src="/header.jpg"
+            className="w-full h-full object-cover"
+            alt="Header"
+          />
+          <div 
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(0, 51, 102, 0.85), rgba(0, 102, 204, 0.75))'
+            }}
+          >
+            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-lg tracking-wider">
+              TURGUT ÖZAL KAİHL
+            </h1>
+          </div>
+        </div>
+
+        {/* Voice Mode Content */}
+        <div className="flex-1 flex flex-col items-center justify-center p-8">
+          {/* Close Button */}
+          <div className="absolute top-24 right-4 sm:right-8">
+            <button
+              onClick={handleVoiceToggle}
+              className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg transition-colors"
+              title="Sesli modu kapat"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Visual Feedback */}
+          <div className="text-center">
+            {isListening && (
+              <div className="mb-6">
+                <img 
+                  src="/dinle.gif" 
+                  alt="Dinleniyor" 
+                  className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto rounded-full shadow-2xl"
+                />
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700 mt-6">
+                  🎤 Dinleniyor...
+                </p>
+                <p className="text-sm sm:text-base text-green-600 mt-2">
+                  Konuşmaya başlayın
+                </p>
+                {transcript && (
+                  <div className="mt-4 p-4 bg-green-100 rounded-lg max-w-md mx-auto">
+                    <p className="text-green-800 font-medium">"{transcript}"</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {isSpeaking && (
+              <div className="mb-6">
+                <img 
+                  src="/konus.gif" 
+                  alt="Konuşuyor" 
+                  className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto rounded-full shadow-2xl"
+                />
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700 mt-6">
+                  🔊 Konuşuyor...
+                </p>
+                <p className="text-sm sm:text-base text-blue-600 mt-2">
+                  Yanıt veriliyor
+                </p>
+              </div>
+            )}
+            
+            {!isListening && !isSpeaking && !isLoading && (
+              <div className="mb-6">
+                <div className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-2xl">
+                  <Mic className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 text-gray-400" />
+                </div>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-600 mt-6">
+                  ⏳ Hazır...
+                </p>
+                <p className="text-sm sm:text-base text-gray-500 mt-2">
+                  Konuşmaya başlamak için bekliyor
+                </p>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="mb-6">
+                <div className="w-48 h-48 sm:w-64 sm:h-64 lg:w-80 lg:h-80 mx-auto rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center shadow-2xl">
+                  <div className="flex space-x-3">
+                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce"></div>
+                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-150"></div>
+                    <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce delay-300"></div>
+                  </div>
+                </div>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600 mt-6">
+                  🤔 Düşünüyor...
+                </p>
+                <p className="text-sm sm:text-base text-blue-500 mt-2">
+                  Yanıt hazırlanıyor
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Instructions */}
+          <div className="mt-8 text-center max-w-2xl">
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">
+                Sesli Konuşma Modu Aktif
+              </h3>
+              <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                Konuşun, yanıt alın ve otomatik olarak tekrar dinlemeye başlar. 
+                Çıkmak için sağ üstteki ❌ butonuna basın.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
@@ -379,68 +504,7 @@ function App() {
                 )}
               </div>
             )}
-
-            {/* Voice Mode Status */}
-            {isVoiceMode && (
-              <div className="mt-2 p-2 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2">
-                  {isListening && (
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  )}
-                  {isSpeaking && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  )}
-                  <span className="text-sm text-green-700 font-medium">
-                    {isListening ? '🎤 Dinleniyor...' : isSpeaking ? '🔊 Konuşuyor...' : '⏳ Hazır...'}
-                  </span>
-                </div>
-                <p className="text-xs text-green-600 mt-1">
-                  Sesli konuşma modu aktif. Konuşun, yanıt alın ve otomatik olarak tekrar dinlemeye başlar.
-                </p>
-                {transcript && isVoiceMode && (
-                  <div className="mt-1 text-xs text-green-800 bg-green-100 p-1 rounded">
-                    "{transcript}"
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-
-          {/* Voice Mode Visual Feedback */}
-          {isVoiceMode && (
-            <div className="flex justify-center items-center p-4 bg-gradient-to-r from-blue-50 to-green-50">
-              <div className="text-center">
-                {isListening && (
-                  <div className="mb-2">
-                    <img 
-                      src="/dinle.gif" 
-                      alt="Dinleniyor" 
-                      className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full shadow-lg"
-                    />
-                    <p className="text-sm sm:text-base font-medium text-green-700 mt-2">Dinleniyor...</p>
-                  </div>
-                )}
-                {isSpeaking && (
-                  <div className="mb-2">
-                    <img 
-                      src="/konus.gif" 
-                      alt="Konuşuyor" 
-                      className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full shadow-lg"
-                    />
-                    <p className="text-sm sm:text-base font-medium text-blue-700 mt-2">Konuşuyor...</p>
-                  </div>
-                )}
-                {!isListening && !isSpeaking && (
-                  <div className="mb-2">
-                    <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full bg-gray-100 flex items-center justify-center shadow-lg">
-                      <Mic className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
-                    </div>
-                    <p className="text-sm sm:text-base font-medium text-gray-600 mt-2">Hazır...</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
@@ -520,79 +584,77 @@ function App() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input Area - Hidden in voice mode */}
-          {!isVoiceMode && (
-            <div className="border-t border-gray-200 p-3 sm:p-4 bg-white rounded-b-2xl">
-              {attachment && (
-                <div className="mb-2 p-2 bg-gray-50 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center">
-                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-[#003366]" />
-                    <span className="text-sm text-gray-600">{attachment.name}</span>
-                  </div>
-                  <button
-                    onClick={() => setAttachment(null)}
-                    className="text-red-500 hover:text-red-700 text-sm"
-                  >
-                    Kaldır
-                  </button>
+          {/* Input Area */}
+          <div className="border-t border-gray-200 p-3 sm:p-4 bg-white rounded-b-2xl">
+            {attachment && (
+              <div className="mb-2 p-2 bg-gray-50 rounded-lg flex items-center justify-between">
+                <div className="flex items-center">
+                  <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-[#003366]" />
+                  <span className="text-sm text-gray-600">{attachment.name}</span>
                 </div>
-              )}
-
-              <div className="flex items-center gap-2 sm:gap-3">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder={isListening ? "Dinleniyor... Konuşmaya başlayın" : "Mesajınızı yazın veya mikrofon butonuna basın..."}
-                  className={`flex-1 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003366] focus:ring-1 focus:ring-[#003366] transition-colors text-sm sm:text-base ${
-                    isListening ? 'border-red-300 bg-red-50' : ''
-                  }`}
-                  disabled={isLoading}
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  ref={fileInputRef}
-                />
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  className="p-3 sm:p-4 text-[#003366] hover:bg-gray-100 rounded-xl transition-colors disabled:text-gray-400 disabled:hover:bg-transparent flex-shrink-0"
-                  title="Resim ekle"
+                  onClick={() => setAttachment(null)}
+                  className="text-red-500 hover:text-red-700 text-sm"
                 >
-                  <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-                
-                {/* Manual Voice Recognition Button */}
-                {speechRecognitionSupported && (
-                  <button
-                    onClick={handleManualVoiceInput}
-                    disabled={isLoading}
-                    className={`p-3 sm:p-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ${
-                      isListening
-                        ? 'bg-red-500 text-white hover:bg-red-600'
-                        : 'text-[#003366] hover:bg-gray-100'
-                    }`}
-                    title={isListening ? 'Dinlemeyi durdur' : 'Sesli mesaj'}
-                  >
-                    {isListening ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
-                  </button>
-                )}
-                
-                <button
-                  onClick={handleSendMessage}
-                  disabled={isLoading}
-                  className="bg-[#003366] hover:bg-[#004080] text-white p-3 sm:p-4 rounded-xl transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center shadow-lg flex-shrink-0"
-                  title="Mesaj gönder"
-                >
-                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Kaldır
                 </button>
               </div>
+            )}
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                placeholder={isListening ? "Dinleniyor... Konuşmaya başlayın" : "Mesajınızı yazın veya mikrofon butonuna basın..."}
+                className={`flex-1 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003366] focus:ring-1 focus:ring-[#003366] transition-colors text-sm sm:text-base ${
+                  isListening ? 'border-red-300 bg-red-50' : ''
+                }`}
+                disabled={isLoading}
+              />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                ref={fileInputRef}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="p-3 sm:p-4 text-[#003366] hover:bg-gray-100 rounded-xl transition-colors disabled:text-gray-400 disabled:hover:bg-transparent flex-shrink-0"
+                title="Resim ekle"
+              >
+                <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+              
+              {/* Manual Voice Recognition Button */}
+              {speechRecognitionSupported && (
+                <button
+                  onClick={handleManualVoiceInput}
+                  disabled={isLoading}
+                  className={`p-3 sm:p-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ${
+                    isListening
+                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      : 'text-[#003366] hover:bg-gray-100'
+                  }`}
+                  title={isListening ? 'Dinlemeyi durdur' : 'Sesli mesaj'}
+                >
+                  {isListening ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
+                </button>
+              )}
+              
+              <button
+                onClick={handleSendMessage}
+                disabled={isLoading}
+                className="bg-[#003366] hover:bg-[#004080] text-white p-3 sm:p-4 rounded-xl transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center shadow-lg flex-shrink-0"
+                title="Mesaj gönder"
+              >
+                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
