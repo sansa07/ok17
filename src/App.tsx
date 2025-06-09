@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
-import { Bot, Send, Image as ImageIcon, FileText, RotateCcw, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Bot, Send, Image as ImageIcon, Mic, MicOff, Volume2, VolumeX, RotateCcw } from 'lucide-react';
 import { ChatMessage, ChatAttachment, Source } from './types';
 import { sendChatMessage, ChatApiError } from './api';
 import { useSpeechRecognition } from './hooks/useSpeechRecognition';
@@ -10,9 +10,6 @@ function App() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
-  const [mode, setMode] = useState<'query' | 'chat'>('chat');
-  const [sources, setSources] = useState<Source[]>([]);
-  const [showSources, setShowSources] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +86,7 @@ function App() {
     try {
       const data = await sendChatMessage(
         spokenText,
-        mode,
+        'chat',
         'user-session-1'
       );
       
@@ -101,13 +98,6 @@ function App() {
       };
 
       setMessages(prev => [...prev, botMessage]);
-      
-      // Update sources
-      if (data.sources && data.sources.length > 0) {
-        setSources(data.sources);
-      } else {
-        setSources([]);
-      }
 
       // Speak response and restart listening when done
       if (data.textResponse && voiceModeRef.current) {
@@ -182,8 +172,6 @@ function App() {
     if (isLoading) return;
     
     setMessages([]);
-    setSources([]);
-    setShowSources(false);
     setIsVoiceMode(false);
     voiceModeRef.current = false;
     stopSpeaking();
@@ -191,7 +179,7 @@ function App() {
     resetTranscript();
     
     try {
-      await sendChatMessage('', mode, 'user-session-1', undefined, true);
+      await sendChatMessage('', 'chat', 'user-session-1', undefined, true);
     } catch (error) {
       console.error('Chat sıfırlama hatası:', error);
     }
@@ -221,7 +209,7 @@ function App() {
     try {
       const data = await sendChatMessage(
         input,
-        mode,
+        'chat',
         'user-session-1',
         attachment ? [attachment] : undefined
       );
@@ -234,14 +222,8 @@ function App() {
       };
 
       setMessages(prev => [...prev, botMessage]);
-      
-      if (data.sources && data.sources.length > 0) {
-        setSources(data.sources);
-      } else {
-        setSources([]);
-      }
 
-      // Auto-speak
+      // Auto-speak if enabled
       if (autoSpeak && data.textResponse) {
         setTimeout(() => {
           speak(data.textResponse);
@@ -329,51 +311,27 @@ function App() {
       </div>
 
       {/* Chat Container */}
-      <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-4">
+      <div className="flex-1 max-w-4xl mx-auto w-full px-2 sm:px-4 lg:px-6 py-4">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 h-full flex flex-col">
           {/* Control Panel */}
-          <div className="border-b border-gray-200 p-4 bg-gray-50 rounded-t-2xl">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Mod:</span>
-                <div className="flex bg-white rounded-lg border border-gray-200 overflow-hidden">
-                  <button
-                    onClick={() => setMode('chat')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${
-                      mode === 'chat'
-                        ? 'bg-[#003366] text-white'
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    Chat
-                  </button>
-                  <button
-                    onClick={() => setMode('query')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${
-                      mode === 'query'
-                        ? 'bg-[#003366] text-white'
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    Query
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
+          <div className="border-b border-gray-200 p-3 sm:p-4 bg-gray-50 rounded-t-2xl">
+            <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 {/* Voice Mode Toggle */}
                 {speechRecognitionSupported && speechSynthesisSupported && (
                   <button
                     onClick={handleVoiceToggle}
                     disabled={isLoading}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors font-medium ${
+                    className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg transition-colors font-medium ${
                       isVoiceMode
                         ? 'bg-green-500 text-white hover:bg-green-600'
                         : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                     title={isVoiceMode ? 'Sesli konuşmayı durdur' : 'Sesli konuşma başlat'}
                   >
-                    {isVoiceMode ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                    {isVoiceMode ? 'Sesli Mod Aktif' : 'Sesli Konuşma'}
+                    {isVoiceMode ? <MicOff className="w-3 h-3 sm:w-4 sm:h-4" /> : <Mic className="w-3 h-3 sm:w-4 sm:h-4" />}
+                    <span className="hidden sm:inline">{isVoiceMode ? 'Sesli Mod Aktif' : 'Sesli Konuşma'}</span>
+                    <span className="sm:hidden">{isVoiceMode ? 'Aktif' : 'Sesli'}</span>
                   </button>
                 )}
                 
@@ -381,44 +339,27 @@ function App() {
                 {speechSynthesisSupported && (
                   <button
                     onClick={() => setAutoSpeak(!autoSpeak)}
-                    className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+                    className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm rounded-lg transition-colors ${
                       autoSpeak
                         ? 'bg-green-50 text-green-700 hover:bg-green-100'
                         : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                     }`}
                     title={autoSpeak ? 'Otomatik konuşmayı kapat' : 'Otomatik konuşmayı aç'}
                   >
-                    {autoSpeak ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                    Otomatik Ses
+                    {autoSpeak ? <Volume2 className="w-3 h-3 sm:w-4 sm:h-4" /> : <VolumeX className="w-3 h-3 sm:w-4 sm:h-4" />}
+                    <span className="hidden sm:inline">Otomatik Ses</span>
                   </button>
                 )}
-                
-                {sources.length > 0 && (
-                  <button
-                    onClick={() => setShowSources(!showSources)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-                  >
-                    <FileText className="w-4 h-4" />
-                    Kaynaklar ({sources.length})
-                  </button>
-                )}
-                <button
-                  onClick={handleResetChat}
-                  disabled={isLoading}
-                  className="flex items-center gap-2 px-3 py-2 text-sm bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Sıfırla
-                </button>
               </div>
-            </div>
-            
-            {/* Mode Description */}
-            <div className="mt-3 text-xs text-gray-600">
-              {mode === 'chat' 
-                ? 'Chat modu: Genel bilgi ve özel verilerle yanıt verir, sohbet geçmişini hatırlar.'
-                : 'Query modu: Sadece veritabanındaki ilgili kaynaklardan yanıt verir, geçmiş hatırlanmaz.'
-              }
+              
+              <button
+                onClick={handleResetChat}
+                disabled={isLoading}
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Sıfırla</span>
+              </button>
             </div>
 
             {/* Voice Status */}
@@ -465,28 +406,49 @@ function App() {
             )}
           </div>
 
-          {/* Sources Panel */}
-          {showSources && sources.length > 0 && (
-            <div className="border-b border-gray-200 p-4 bg-blue-50 max-h-48 overflow-y-auto">
-              <h3 className="font-medium text-blue-900 mb-3">Kullanılan Kaynaklar:</h3>
-              <div className="space-y-2">
-                {sources.map((source, index) => (
-                  <div key={index} className="bg-white p-3 rounded-lg border border-blue-200">
-                    <div className="font-medium text-blue-800 text-sm mb-1">{source.title}</div>
-                    <div className="text-xs text-gray-600 line-clamp-3">{source.chunk}</div>
+          {/* Voice Mode Visual Feedback */}
+          {isVoiceMode && (
+            <div className="flex justify-center items-center p-4 bg-gradient-to-r from-blue-50 to-green-50">
+              <div className="text-center">
+                {isListening && (
+                  <div className="mb-2">
+                    <img 
+                      src="/dinle.gif" 
+                      alt="Dinleniyor" 
+                      className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full shadow-lg"
+                    />
+                    <p className="text-sm sm:text-base font-medium text-green-700 mt-2">Dinleniyor...</p>
                   </div>
-                ))}
+                )}
+                {isSpeaking && (
+                  <div className="mb-2">
+                    <img 
+                      src="/konus.gif" 
+                      alt="Konuşuyor" 
+                      className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full shadow-lg"
+                    />
+                    <p className="text-sm sm:text-base font-medium text-blue-700 mt-2">Konuşuyor...</p>
+                  </div>
+                )}
+                {!isListening && !isSpeaking && (
+                  <div className="mb-2">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full bg-gray-100 flex items-center justify-center shadow-lg">
+                      <Mic className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400" />
+                    </div>
+                    <p className="text-sm sm:text-base font-medium text-gray-600 mt-2">Hazır...</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
             {messages.length === 0 && (
               <div className="text-center text-gray-600 py-8">
-                <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 shadow-lg">
-                  <Bot className="w-12 h-12 mx-auto mb-4 text-[#003366]" />
-                  <p className="text-xl sm:text-2xl font-medium mb-3">Merhaba! Size nasıl yardımcı olabilirim?</p>
+                <div className="bg-gray-50 p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-lg">
+                  <Bot className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 text-[#003366]" />
+                  <p className="text-lg sm:text-xl lg:text-2xl font-medium mb-3">Merhaba! Size nasıl yardımcı olabilirim?</p>
                   <p className="text-gray-500">Herhangi bir sorunuzu yanıtlamaya hazırım.</p>
                   {speechRecognitionSupported && speechSynthesisSupported && (
                     <p className="text-sm text-blue-600 mt-2">💡 "Sesli Konuşma" butonuna basarak sürekli sesli sohbet edebilirsiniz!</p>
@@ -501,7 +463,7 @@ function App() {
                 className={`mb-4 flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 ${
+                  className={`max-w-[90%] sm:max-w-[85%] lg:max-w-[75%] rounded-2xl p-3 sm:p-4 ${
                     msg.type === 'user'
                       ? 'bg-[#003366] text-white shadow-lg'
                       : 'bg-gray-50 border border-gray-200 text-gray-800'
@@ -510,8 +472,8 @@ function App() {
                   {msg.type === 'bot' && (
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center">
-                        <Bot className="w-5 h-5 mr-2 text-[#003366]" />
-                        <span className="font-medium text-[#003366]">Asistan</span>
+                        <Bot className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-[#003366]" />
+                        <span className="font-medium text-[#003366] text-sm sm:text-base">Asistan</span>
                       </div>
                       {speechSynthesisSupported && !isVoiceMode && (
                         <button
@@ -519,7 +481,7 @@ function App() {
                           className="p-1 text-[#003366] hover:bg-gray-200 rounded transition-colors"
                           title={isSpeaking ? 'Konuşmayı durdur' : 'Sesli oku'}
                         >
-                          {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                          {isSpeaking ? <VolumeX className="w-3 h-3 sm:w-4 sm:h-4" /> : <Volume2 className="w-3 h-3 sm:w-4 sm:h-4" />}
                         </button>
                       )}
                     </div>
@@ -543,9 +505,9 @@ function App() {
             
             {isLoading && (
               <div className="flex justify-start mb-4">
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4">
+                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-3 sm:p-4">
                   <div className="flex items-center">
-                    <Bot className="w-5 h-5 mr-2 text-[#003366]" />
+                    <Bot className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-[#003366]" />
                     <div className="flex space-x-2">
                       <div className="w-2 h-2 bg-[#003366] rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-[#003366] rounded-full animate-bounce delay-150"></div>
@@ -560,11 +522,11 @@ function App() {
 
           {/* Input Area - Hidden in voice mode */}
           {!isVoiceMode && (
-            <div className="border-t border-gray-200 p-4 bg-white rounded-b-2xl">
+            <div className="border-t border-gray-200 p-3 sm:p-4 bg-white rounded-b-2xl">
               {attachment && (
                 <div className="mb-2 p-2 bg-gray-50 rounded-lg flex items-center justify-between">
                   <div className="flex items-center">
-                    <ImageIcon className="w-5 h-5 mr-2 text-[#003366]" />
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-[#003366]" />
                     <span className="text-sm text-gray-600">{attachment.name}</span>
                   </div>
                   <button
@@ -576,14 +538,14 @@ function App() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder={isListening ? "Dinleniyor... Konuşmaya başlayın" : "Mesajınızı yazın veya mikrofon butonuna basın..."}
-                  className={`flex-1 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003366] focus:ring-1 focus:ring-[#003366] transition-colors ${
+                  className={`flex-1 p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003366] focus:ring-1 focus:ring-[#003366] transition-colors text-sm sm:text-base ${
                     isListening ? 'border-red-300 bg-red-50' : ''
                   }`}
                   disabled={isLoading}
@@ -598,10 +560,10 @@ function App() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isLoading}
-                  className="p-3 sm:p-4 text-[#003366] hover:bg-gray-100 rounded-xl transition-colors disabled:text-gray-400 disabled:hover:bg-transparent"
+                  className="p-3 sm:p-4 text-[#003366] hover:bg-gray-100 rounded-xl transition-colors disabled:text-gray-400 disabled:hover:bg-transparent flex-shrink-0"
                   title="Resim ekle"
                 >
-                  <ImageIcon className="w-5 h-5" />
+                  <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 
                 {/* Manual Voice Recognition Button */}
@@ -609,24 +571,24 @@ function App() {
                   <button
                     onClick={handleManualVoiceInput}
                     disabled={isLoading}
-                    className={`p-3 sm:p-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    className={`p-3 sm:p-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ${
                       isListening
                         ? 'bg-red-500 text-white hover:bg-red-600'
                         : 'text-[#003366] hover:bg-gray-100'
                     }`}
                     title={isListening ? 'Dinlemeyi durdur' : 'Sesli mesaj'}
                   >
-                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                    {isListening ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
                   </button>
                 )}
                 
                 <button
                   onClick={handleSendMessage}
                   disabled={isLoading}
-                  className="bg-[#003366] hover:bg-[#004080] text-white p-3 sm:p-4 rounded-xl transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                  className="bg-[#003366] hover:bg-[#004080] text-white p-3 sm:p-4 rounded-xl transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center shadow-lg flex-shrink-0"
                   title="Mesaj gönder"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
