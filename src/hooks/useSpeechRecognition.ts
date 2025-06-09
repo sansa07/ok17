@@ -142,7 +142,12 @@ export const useSpeechRecognition = () => {
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('❌ Speech recognition error:', event.error);
+      // Handle different error types appropriately
+      if (event.error === 'aborted') {
+        console.log('ℹ️ Speech recognition was aborted (normal operation)');
+      } else {
+        console.error('❌ Speech recognition error:', event.error);
+      }
       setIsListening(false);
       recognitionRef.current = null;
     };
